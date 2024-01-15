@@ -1,2 +1,7 @@
 unicode
 .idea
+
+cmake-*
+/vcpkg_installed
+*.o
+*.o.d
