@@ -7,6 +7,26 @@ __EXTERN_START__
 typedef struct JSRuntime JSRuntime;
 typedef struct JSContext JSContext;
 
+/* JS_Eval() flags */
+#define JS_EVAL_TYPE_GLOBAL   (0 << 0) /* global code (default) */
+#define JS_EVAL_TYPE_MODULE   (1 << 0) /* module code */
+#define JS_EVAL_TYPE_DIRECT   (2 << 0) /* direct call (internal use) */
+#define JS_EVAL_TYPE_INDIRECT (3 << 0) /* indirect call (internal use) */
+#define JS_EVAL_TYPE_MASK     (3 << 0)
+
+#define JS_EVAL_FLAG_STRICT   (1 << 3) /* force 'strict' mode */
+#define JS_EVAL_FLAG_STRIP    (1 << 4) /* force 'strip' mode */
+/* compile but do not run. The result is an object with a
+   JS_TAG_FUNCTION_BYTECODE or JS_TAG_MODULE tag. It can be executed
+   with JS_EvalFunction(). */
+#define JS_EVAL_FLAG_COMPILE_ONLY (1 << 5)
+/* don't include the stack frames before this eval in the Error() backtraces */
+#define JS_EVAL_FLAG_BACKTRACE_BARRIER (1 << 6)
+/* allow top-level await in normal script. JS_Eval() returns a
+   promise. Only allowed with JS_EVAL_TYPE_GLOBAL */
+#define JS_EVAL_FLAG_ASYNC (1 << 7)
+
+
 JSContext *JS_NewContext(JSRuntime *rt);
 void JS_FreeContext(JSContext *s);
 JSContext *JS_DupContext(JSContext *ctx);
@@ -126,15 +146,36 @@ static inline const char *JS_ToCString(JSContext *ctx, JSValueConst val1)
 void JS_FreeCString(JSContext *ctx, const char *ptr);
 
 
-JSValue JS_NewObjectProtoClass(JSContext *ctx, JSValueConst proto, JSClassID class_id);
-JSValue JS_NewObjectClass(JSContext *ctx, int class_id);
-JSValue JS_NewObjectProto(JSContext *ctx, JSValueConst proto);
-JSValue JS_NewObject(JSContext *ctx);
 
-JS_BOOL JS_IsFunction(JSContext* ctx, JSValueConst val);
-JS_BOOL JS_IsConstructor(JSContext* ctx, JSValueConst val);
-JS_BOOL JS_SetConstructorBit(JSContext *ctx, JSValueConst func_obj, JS_BOOL val);
+JSValue JS_Call(JSContext *ctx, JSValueConst func_obj, JSValueConst this_obj,
+                int argc, JSValueConst *argv);
+JSValue JS_Invoke(JSContext *ctx, JSValueConst this_val, JSAtom atom,
+                  int argc, JSValueConst *argv);
+JSValue JS_CallConstructor(JSContext *ctx, JSValueConst func_obj,
+                           int argc, JSValueConst *argv);
+JSValue JS_CallConstructor2(JSContext *ctx, JSValueConst func_obj,
+                            JSValueConst new_target,
+                            int argc, JSValueConst *argv);
+JS_BOOL JS_DetectModule(const char *input, size_t input_len);
+/* 'input' must be zero terminated i.e. input[input_len] = '\0'. */
+JSValue JS_Eval(JSContext *ctx, const char *input, size_t input_len,
+                const char *filename, int eval_flags);
+/* same as JS_Eval() but with an explicit 'this_obj' parameter */
+JSValue JS_EvalThis(JSContext *ctx, JSValueConst this_obj,
+                    const char *input, size_t input_len,
+                    const char *filename, int eval_flags);
+JSValue JS_GetGlobalObject(JSContext *ctx);
 
+
+
+/* 'buf' must be zero terminated i.e. buf[buf_len] = '\0'. */
+JSValue JS_ParseJSON(JSContext *ctx, const char *buf, size_t buf_len,
+                     const char *filename);
+#define JS_PARSE_JSON_EXT (1 << 0) /* allow extended JSON */
+JSValue JS_ParseJSON2(JSContext *ctx, const char *buf, size_t buf_len,
+                      const char *filename, int flags);
+JSValue JS_JSONStringify(JSContext *ctx, JSValueConst obj,
+                         JSValueConst replacer, JSValueConst space0);
 
 __EXTERN_END__
 #endif // QJS_JS_CONTEXT_H_
