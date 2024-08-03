@@ -28,31 +28,20 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "src/macros.h"
 #include "src/js_value.h"
 #include "src/js_runtime.h"
 #include "src/js_context.h"
+#include "src/js_atom.h"
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#if defined(__GNUC__) || defined(__clang__)
-#define js_likely(x)          __builtin_expect(!!(x), 1)
-#define js_unlikely(x)        __builtin_expect(!!(x), 0)
-#define js_force_inline       inline __attribute__((always_inline))
-#define __js_printf_like(f, a)   __attribute__((format(printf, f, a)))
-#else
-#define js_likely(x)     (x)
-#define js_unlikely(x)   (x)
-#define js_force_inline  inline
-#define __js_printf_like(a, b)
 #endif
 
 // TODO: remove this when extract to a header file
 typedef struct JSObject JSObject;
 typedef struct JSClass JSClass;
 typedef uint32_t JSClassID;
-typedef uint32_t JSAtom;
 
 typedef struct JSRefCountHeader {
     int ref_count;
@@ -114,40 +103,6 @@ typedef struct JSRefCountHeader {
 typedef JSValue JSCFunction(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv);
 typedef JSValue JSCFunctionMagic(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv, int magic);
 typedef JSValue JSCFunctionData(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv, int magic, JSValue *func_data);
-
-
-typedef struct JSMemoryUsage {
-    int64_t malloc_size, malloc_limit, memory_used_size;
-    int64_t malloc_count;
-    int64_t memory_used_count;
-    int64_t atom_count, atom_size;
-    int64_t str_count, str_size;
-    int64_t obj_count, obj_size;
-    int64_t prop_count, prop_size;
-    int64_t shape_count, shape_size;
-    int64_t js_func_count, js_func_size, js_func_code_size;
-    int64_t js_func_pc2line_count, js_func_pc2line_size;
-    int64_t c_func_count, array_count;
-    int64_t fast_array_count, fast_array_elements;
-    int64_t binary_object_count, binary_object_size;
-} JSMemoryUsage;
-
-void JS_ComputeMemoryUsage(JSRuntime *rt, JSMemoryUsage *s);
-void JS_DumpMemoryUsage(FILE *fp, const JSMemoryUsage *s, JSRuntime *rt);
-
-/* atom support */
-#define JS_ATOM_NULL 0
-
-JSAtom JS_NewAtomLen(JSContext *ctx, const char *str, size_t len);
-JSAtom JS_NewAtom(JSContext *ctx, const char *str);
-JSAtom JS_NewAtomUInt32(JSContext *ctx, uint32_t n);
-JSAtom JS_DupAtom(JSContext *ctx, JSAtom v);
-void JS_FreeAtom(JSContext *ctx, JSAtom v);
-void JS_FreeAtomRT(JSRuntime *rt, JSAtom v);
-JSValue JS_AtomToValue(JSContext *ctx, JSAtom atom);
-JSValue JS_AtomToString(JSContext *ctx, JSAtom atom);
-const char *JS_AtomToCString(JSContext *ctx, JSAtom atom);
-JSAtom JS_ValueToAtom(JSContext *ctx, JSValueConst val);
 
 /* object class support */
 
