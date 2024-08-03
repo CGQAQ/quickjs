@@ -216,6 +216,131 @@ static inline JS_BOOL JS_VALUE_IS_NAN(JSValue v)
 #endif /* !JS_NAN_BOXING */
 
 
+/* value handling */
+
+static js_force_inline JSValue JS_NewBool(JSContext *ctx, JS_BOOL val)
+{
+    return JS_MKVAL(JS_TAG_BOOL, (val != 0));
+}
+
+static js_force_inline JSValue JS_NewInt32(JSContext *ctx, int32_t val)
+{
+    return JS_MKVAL(JS_TAG_INT, val);
+}
+
+static js_force_inline JSValue JS_NewCatchOffset(JSContext *ctx, int32_t val)
+{
+    return JS_MKVAL(JS_TAG_CATCH_OFFSET, val);
+}
+
+static js_force_inline JSValue JS_NewInt64(JSContext *ctx, int64_t val)
+{
+    JSValue v;
+    if (val == (int32_t)val) {
+        v = JS_NewInt32(ctx, val);
+    } else {
+        v = __JS_NewFloat64(ctx, val);
+    }
+    return v;
+}
+
+static js_force_inline JSValue JS_NewUint32(JSContext *ctx, uint32_t val)
+{
+    JSValue v;
+    if (val <= 0x7fffffff) {
+        v = JS_NewInt32(ctx, val);
+    } else {
+        v = __JS_NewFloat64(ctx, val);
+    }
+    return v;
+}
+
+JSValue JS_NewBigInt64(JSContext *ctx, int64_t v);
+JSValue JS_NewBigUint64(JSContext *ctx, uint64_t v);
+
+static js_force_inline JSValue JS_NewFloat64(JSContext *ctx, double d)
+{
+    int32_t val;
+    union {
+        double d;
+        uint64_t u;
+    } u, t;
+    if (d >= INT32_MIN && d <= INT32_MAX) {
+        u.d = d;
+        val = (int32_t)d;
+        t.d = val;
+        /* -0 cannot be represented as integer, so we compare the bit
+           representation */
+        if (u.u == t.u)
+            return JS_MKVAL(JS_TAG_INT, val);
+    }
+    return __JS_NewFloat64(ctx, d);
+}
+
+static inline JS_BOOL JS_IsNumber(JSValueConst v)
+{
+    int tag = JS_VALUE_GET_TAG(v);
+    return tag == JS_TAG_INT || JS_TAG_IS_FLOAT64(tag);
+}
+
+static inline JS_BOOL JS_IsBigInt(JSContext *ctx, JSValueConst v)
+{
+    int tag = JS_VALUE_GET_TAG(v);
+    return tag == JS_TAG_BIG_INT;
+}
+
+static inline JS_BOOL JS_IsBigFloat(JSValueConst v)
+{
+    int tag = JS_VALUE_GET_TAG(v);
+    return tag == JS_TAG_BIG_FLOAT;
+}
+
+static inline JS_BOOL JS_IsBigDecimal(JSValueConst v)
+{
+    int tag = JS_VALUE_GET_TAG(v);
+    return tag == JS_TAG_BIG_DECIMAL;
+}
+
+static inline JS_BOOL JS_IsBool(JSValueConst v)
+{
+    return JS_VALUE_GET_TAG(v) == JS_TAG_BOOL;
+}
+
+static inline JS_BOOL JS_IsNull(JSValueConst v)
+{
+    return JS_VALUE_GET_TAG(v) == JS_TAG_NULL;
+}
+
+static inline JS_BOOL JS_IsUndefined(JSValueConst v)
+{
+    return JS_VALUE_GET_TAG(v) == JS_TAG_UNDEFINED;
+}
+
+static inline JS_BOOL JS_IsException(JSValueConst v)
+{
+    return js_unlikely(JS_VALUE_GET_TAG(v) == JS_TAG_EXCEPTION);
+}
+
+static inline JS_BOOL JS_IsUninitialized(JSValueConst v)
+{
+    return js_unlikely(JS_VALUE_GET_TAG(v) == JS_TAG_UNINITIALIZED);
+}
+
+static inline JS_BOOL JS_IsString(JSValueConst v)
+{
+    return JS_VALUE_GET_TAG(v) == JS_TAG_STRING;
+}
+
+static inline JS_BOOL JS_IsSymbol(JSValueConst v)
+{
+    return JS_VALUE_GET_TAG(v) == JS_TAG_SYMBOL;
+}
+
+static inline JS_BOOL JS_IsObject(JSValueConst v)
+{
+    return JS_VALUE_GET_TAG(v) == JS_TAG_OBJECT;
+}
+
 
 
 #ifdef __cplusplus

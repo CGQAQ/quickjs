@@ -7,6 +7,10 @@
 __EXTERN_START__
 
 typedef struct JSGCObjectHeader JSGCObjectHeader;
+typedef struct JSRefCountHeader {
+    int ref_count;
+} JSRefCountHeader;
+
 
 typedef struct JSMallocState {
     size_t malloc_count;
@@ -71,6 +75,26 @@ void JS_ComputeMemoryUsage(JSRuntime *rt, JSMemoryUsage *s);
 void JS_DumpMemoryUsage(FILE *fp, const JSMemoryUsage *s, JSRuntime *rt);
 
 
+void __JS_FreeValueRT(JSRuntime *rt, JSValue v);
+static inline void JS_FreeValueRT(JSRuntime *rt, JSValue v)
+{
+    if (JS_VALUE_HAS_REF_COUNT(v)) {
+        JSRefCountHeader *p = (JSRefCountHeader *)JS_VALUE_GET_PTR(v);
+        if (--p->ref_count <= 0) {
+            __JS_FreeValueRT(rt, v);
+        }
+    }
+}
+
+
+static inline JSValue JS_DupValueRT(JSRuntime *rt, JSValueConst v)
+{
+    if (JS_VALUE_HAS_REF_COUNT(v)) {
+        JSRefCountHeader *p = (JSRefCountHeader *)JS_VALUE_GET_PTR(v);
+        p->ref_count++;
+    }
+    return (JSValue)v;
+}
 
 __EXTERN_END__
 #endif // QJS_JS_RUNTIME_H_
