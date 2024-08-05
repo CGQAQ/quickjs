@@ -22,3 +22,6 @@ unicode
 unicode_gen
 run_octane
 run_sunspider_like
+
+.cache/
+compile_commands.json

@@ -1,5 +1,8 @@
 #ifndef QJS_JS_CONTEXT_H_
 #define QJS_JS_CONTEXT_H_
+#include "./basic_types.h"
+#include "./js_gc.h"
+#include "./js_value.h"
 
 #include "./macros.h"
 __EXTERN_START__

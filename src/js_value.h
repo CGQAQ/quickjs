@@ -1,9 +1,10 @@
 #ifndef QJS_JS_VALUE_H_
 #define QJS_JS_VALUE_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+#include <stdint.h>
+
+#include "./macros.h"
+__EXTERN_START__
 
 // TODO: remove this when extract to a header file
 typedef struct JSRuntime JSRuntime;
@@ -341,9 +342,5 @@ static inline JS_BOOL JS_IsObject(JSValueConst v)
     return JS_VALUE_GET_TAG(v) == JS_TAG_OBJECT;
 }
 
-
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+__EXTERN_END__
 #endif // QJS_JS_VALUE_H_
